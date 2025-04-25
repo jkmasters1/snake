@@ -1,15 +1,225 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>贪吃蛇游戏</title>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            color: #ffffff;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+        }
+
+        #mainMenu {
+            display: flex;
+        }
+
+        .title {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #4CAF50;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .menu-button {
+            padding: 12px 24px;
+            font-size: 1.2em;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            min-width: 200px;
+            margin: 5px;
+        }
+
+        .menu-button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .menu-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #gameCanvas {
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+            background: #000000;
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        #gameOver {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #4CAF50;
+        }
+
+        .shop-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .shop-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .shop-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .shop-item h3 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+
+        .shop-item p {
+            margin-bottom: 15px;
+        }
+
+        #leaderboard {
+            list-style: none;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+            border-radius: 5px;
+            transition: transform 0.2s;
+        }
+
+        .leaderboard-item:hover {
+            transform: translateX(10px);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+
+            .title {
+                font-size: 2em;
+            }
+
+            #gameCanvas {
+                width: 100%;
+                height: auto;
+            }
+
+            .menu-button {
+                font-size: 1em;
+                padding: 10px 20px;
+                min-width: 150px;
+            }
+
+            .shop-items {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
-    <button id="restartButton" style="display: none;">重新开始</button>
-    <div id="leaderboard" style="display: none; position: absolute; top: 20px; right: 20px; background-color: white; padding: 10px; border: 1px solid #000;"></div>
-    <script src="script.js"></script>
+    <div class="container">
+        <!-- 主菜单 -->
+        <div id="mainMenu" class="screen">
+            <h1 class="title">贪吃蛇游戏</h1>
+            <button class="menu-button" onclick="showScreen('gameScreen')">开始游戏</button>
+            <button class="menu-button" onclick="showScreen('shopScreen')">商店</button>
+            <button class="menu-button" onclick="showScreen('leaderboardScreen')">排行榜</button>
+        </div>
+
+        <!-- 游戏界面 -->
+        <div id="gameScreen" class="screen">
+            <div class="game-info">
+                <span>分数: <span id="score">0</span></span>
+                <span>金币: <span id="coins">0</span></span>
+            </div>
+            <canvas id="gameCanvas" width="500" height="500"></canvas>
+            <button class="menu-button" onclick="showScreen('mainMenu')">返回主菜单</button>
+            
+            <!-- 游戏结束弹窗 -->
+            <div id="gameOver">
+                <h2>游戏结束</h2>
+                <p>最终得分: <span id="finalScore">0</span></p>
+                <button class="menu-button" onclick="restartGame()">重新开始</button>
+                <button class="menu-button" onclick="showScreen('mainMenu')">返回主菜单</button>
+            </div>
+        </div>
+
+        <!-- 商店界面 -->
+        <div id="shopScreen" class="screen">
+            <h2 class="title">商店</h2>
+            <p>当前金币: <span id="shopCoins">0</span></p>
+            <div id="shopItems" class="shop-items"></div>
+            <button class="menu-button" onclick="showScreen('mainMenu')">返回主菜单</button>
+        </div>
+
+        <!-- 排行榜界面 -->
+        <div id="leaderboardScreen" class="screen">
+            <h2 class="title">排行榜</h2>
+            <ul id="leaderboard"></ul>
+            <button class="menu-button" onclick="showScreen('mainMenu')">返回主菜单</button>
+        </div>
+    </div>
+
+    <script src="snake.js"></script>
 </body>
-</html>
+</html> 
