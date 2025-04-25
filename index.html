@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Carter的贪吃蛇游戏</title>
     <style>
         * {
@@ -10,39 +10,55 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Microsoft YaHei', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         body {
             min-height: 100vh;
+            min-height: -webkit-fill-available;
             display: flex;
             justify-content: center;
             align-items: center;
             background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
             color: #ffffff;
+            overflow: hidden;
+        }
+
+        html {
+            height: -webkit-fill-available;
         }
 
         .container {
             position: relative;
             width: 100%;
             max-width: 800px;
-            padding: 20px;
+            padding: 10px;
+            height: 100vh;
+            height: -webkit-fill-available;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .screen {
             display: none;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
             width: 100%;
+            height: 100%;
+            padding: 10px;
         }
 
         #mainMenu {
             display: flex;
+            justify-content: center;
         }
 
         .title {
-            font-size: 2.5em;
-            margin-bottom: 30px;
+            font-size: min(2.5em, 8vw);
+            margin-bottom: 20px;
             text-align: center;
             color: #4CAF50;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
@@ -50,20 +66,21 @@
 
         .menu-button {
             padding: 12px 24px;
-            font-size: 1.2em;
+            font-size: min(1.2em, 5vw);
             background: #4CAF50;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             transition: transform 0.2s, background 0.2s;
-            min-width: 200px;
+            min-width: min(200px, 80vw);
             margin: 5px;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .menu-button:hover {
+        .menu-button:active {
             background: #45a049;
-            transform: translateY(-2px);
+            transform: scale(0.98);
         }
 
         .menu-button:disabled {
@@ -77,16 +94,66 @@
             border-radius: 5px;
             background: #000000;
             box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+            max-width: 100%;
+            max-height: 60vh;
+            aspect-ratio: 1;
+            touch-action: none;
         }
 
         .game-info {
             display: flex;
             justify-content: space-between;
             width: 100%;
-            max-width: 500px;
-            margin-bottom: 20px;
-            font-size: 1.2em;
+            max-width: min(500px, 90vw);
+            padding: 10px;
+            font-size: min(1.2em, 5vw);
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
         }
+
+        .controls-info {
+            text-align: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            font-size: min(0.9em, 4vw);
+        }
+
+        .touch-controls {
+            display: none;
+            position: relative;
+            width: min(180px, 40vw);
+            height: min(180px, 40vw);
+            margin: 10px auto;
+        }
+
+        .direction-btn {
+            position: absolute;
+            width: min(50px, 12vw);
+            height: min(50px, 12vw);
+            background: rgba(76, 175, 80, 0.7);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: min(24px, 6vw);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .direction-btn:active {
+            background: rgba(76, 175, 80, 0.9);
+            transform: scale(0.95);
+        }
+
+        .up-btn { top: 0; left: 50%; transform: translateX(-50%); }
+        .down-btn { bottom: 0; left: 50%; transform: translateX(-50%); }
+        .left-btn { left: 0; top: 50%; transform: translateY(-50%); }
+        .right-btn { right: 0; top: 50%; transform: translateY(-50%); }
 
         #gameOver {
             display: none;
@@ -95,83 +162,117 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(0, 0, 0, 0.9);
-            padding: 30px;
+            padding: min(30px, 5vw);
             border-radius: 10px;
             text-align: center;
             border: 2px solid #4CAF50;
+            width: min(90%, 400px);
         }
 
         .shop-items {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(min(160px, 45vw), 1fr));
+            gap: 15px;
             width: 100%;
-            max-width: 800px;
+            max-width: min(800px, 95vw);
+            padding: 10px;
+            overflow-y: auto;
+            max-height: 70vh;
         }
 
         .shop-item {
             background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
+            padding: 15px;
             border-radius: 10px;
             text-align: center;
             transition: transform 0.2s;
         }
 
-        .shop-item:hover {
-            transform: translateY(-5px);
+        .shop-item:active {
+            transform: scale(0.98);
         }
 
         .shop-item h3 {
             color: #4CAF50;
             margin-bottom: 10px;
+            font-size: min(1.1em, 4.5vw);
         }
 
         .shop-item p {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+            font-size: min(0.9em, 4vw);
         }
 
         #leaderboard {
             list-style: none;
             width: 100%;
-            max-width: 600px;
+            max-width: min(600px, 95vw);
+            overflow-y: auto;
+            max-height: 60vh;
+            padding: 10px;
         }
 
         .leaderboard-item {
             display: flex;
             justify-content: space-between;
-            padding: 15px;
+            padding: 12px;
             background: rgba(255, 255, 255, 0.1);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             border-radius: 5px;
-            transition: transform 0.2s;
+            font-size: min(1em, 4.5vw);
         }
 
-        .leaderboard-item:hover {
-            transform: translateX(10px);
+        .leaderboard-item:active {
+            transform: scale(0.98);
         }
 
+        /* 移动端优化 */
         @media (max-width: 600px) {
             .container {
-                padding: 10px;
+                padding: 5px;
             }
 
-            .title {
-                font-size: 2em;
+            .touch-controls {
+                display: block;
+            }
+
+            .controls-info span.keyboard-controls {
+                display: none;
             }
 
             #gameCanvas {
-                width: 100%;
-                height: auto;
+                max-height: 50vh;
+            }
+
+            .game-info {
+                position: sticky;
+                top: 0;
+                z-index: 1;
             }
 
             .menu-button {
-                font-size: 1em;
                 padding: 10px 20px;
-                min-width: 150px;
             }
 
             .shop-items {
                 grid-template-columns: 1fr;
+            }
+        }
+
+        /* 适配刘海屏 */
+        @supports (padding: max(0px)) {
+            .container {
+                padding-left: max(10px, env(safe-area-inset-left));
+                padding-right: max(10px, env(safe-area-inset-right));
+                padding-top: max(10px, env(safe-area-inset-top));
+                padding-bottom: max(10px, env(safe-area-inset-bottom));
+            }
+        }
+
+        /* 防止弹性滚动 */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                overflow: hidden;
             }
         }
     </style>
@@ -180,10 +281,16 @@
     <div class="container">
         <!-- 主菜单 -->
         <div id="mainMenu" class="screen">
-            <h1 class="title">贪吃蛇游戏</h1>
+            <h1 class="title">Carter的贪吃蛇游戏</h1>
             <button class="menu-button" onclick="showScreen('gameScreen')">开始游戏</button>
             <button class="menu-button" onclick="showScreen('shopScreen')">商店</button>
             <button class="menu-button" onclick="showScreen('leaderboardScreen')">排行榜</button>
+            <div class="controls-info">
+                操作方式：<br>
+                <span class="keyboard-controls">键盘：方向键 或 WASD<br></span>
+                手机：点击方向按钮或滑动屏幕<br>
+                暂停：双击屏幕
+            </div>
         </div>
 
         <!-- 游戏界面 -->
@@ -193,12 +300,18 @@
                 <span>金币: <span id="coins">0</span></span>
             </div>
             <canvas id="gameCanvas" width="500" height="500"></canvas>
+            <div class="touch-controls">
+                <button class="direction-btn up-btn" id="upBtn">↑</button>
+                <button class="direction-btn down-btn" id="downBtn">↓</button>
+                <button class="direction-btn left-btn" id="leftBtn">←</button>
+                <button class="direction-btn right-btn" id="rightBtn">→</button>
+            </div>
             <button class="menu-button" onclick="showScreen('mainMenu')">返回主菜单</button>
             
             <!-- 游戏结束弹窗 -->
             <div id="gameOver">
-                <h2>游戏结束</h2>
-                <p>最终得分: <span id="finalScore">0</span></p>
+                <h2 style="font-size: min(1.5em, 6vw); margin-bottom: 15px;">游戏结束</h2>
+                <p style="font-size: min(1.2em, 5vw); margin-bottom: 20px;">最终得分: <span id="finalScore">0</span></p>
                 <button class="menu-button" onclick="restartGame()">重新开始</button>
                 <button class="menu-button" onclick="showScreen('mainMenu')">返回主菜单</button>
             </div>
@@ -207,7 +320,7 @@
         <!-- 商店界面 -->
         <div id="shopScreen" class="screen">
             <h2 class="title">商店</h2>
-            <p>当前金币: <span id="shopCoins">0</span></p>
+            <p style="font-size: min(1.2em, 5vw);">当前金币: <span id="shopCoins">0</span></p>
             <div id="shopItems" class="shop-items"></div>
             <button class="menu-button" onclick="showScreen('mainMenu')">返回主菜单</button>
         </div>

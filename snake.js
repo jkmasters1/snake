@@ -5,10 +5,14 @@ const config = {
     gridSize: 20,
     initialLength: 3,
     foodValue: 10,
-    coinChance: 0.2,
+    coinChance: 0.4,
     coinValue: 10,
     comboTimeWindow: 5000,
-    comboMultiplier: 1.2
+    comboMultiplier: 1.5,
+    // 移动端配置
+    swipeThreshold: 30,        // 滑动触发阈值
+    doubleTapDelay: 300,      // 双击判定时间（毫秒）
+    touchSensitivity: 1.2     // 触摸灵敏度
 };
 
 // 商店物品
@@ -551,6 +555,135 @@ function loadGameData() {
     updateCoins();
 }
 
+// 初始化触控按钮
+function initTouchControls() {
+    const upBtn = document.getElementById('upBtn');
+    const downBtn = document.getElementById('downBtn');
+    const leftBtn = document.getElementById('leftBtn');
+    const rightBtn = document.getElementById('rightBtn');
+    const canvas = document.getElementById('gameCanvas');
+
+    // 处理触摸事件
+    function handleTouch(direction) {
+        if (gameState.paused) return;
+        
+        switch(direction) {
+            case 'up':
+                if (gameState.direction !== "down") {
+                    gameState.nextDirection = "up";
+                }
+                break;
+            case 'down':
+                if (gameState.direction !== "up") {
+                    gameState.nextDirection = "down";
+                }
+                break;
+            case 'left':
+                if (gameState.direction !== "right") {
+                    gameState.nextDirection = "left";
+                }
+                break;
+            case 'right':
+                if (gameState.direction !== "left") {
+                    gameState.nextDirection = "right";
+                }
+                break;
+        }
+    }
+
+    // 方向按钮事件
+    const buttons = [
+        { el: upBtn, dir: 'up' },
+        { el: downBtn, dir: 'down' },
+        { el: leftBtn, dir: 'left' },
+        { el: rightBtn, dir: 'right' }
+    ];
+
+    buttons.forEach(btn => {
+        ['touchstart', 'mousedown'].forEach(event => {
+            btn.el.addEventListener(event, (e) => {
+                e.preventDefault();
+                handleTouch(btn.dir);
+            });
+        });
+    });
+
+    // 双击暂停
+    let lastTap = 0;
+    canvas.addEventListener('touchend', (e) => {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        if (tapLength < config.doubleTapDelay && tapLength > 0) {
+            e.preventDefault();
+            gameState.paused = !gameState.paused;
+        }
+        lastTap = currentTime;
+    });
+
+    // 滑动控制
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let lastDirection = null;
+    let touchStartTime = 0;
+
+    canvas.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTime = Date.now();
+        lastDirection = null;
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (gameState.paused) return;
+
+        const touchX = e.touches[0].clientX;
+        const touchY = e.touches[0].clientY;
+        const deltaX = touchX - touchStartX;
+        const deltaY = touchY - touchStartY;
+        const deltaTime = Date.now() - touchStartTime;
+
+        // 计算滑动速度
+        const speed = Math.sqrt(deltaX * deltaX + deltaY * deltaY) / deltaTime;
+        const threshold = config.swipeThreshold * (speed > 1 ? 1 / speed : 1);
+
+        // 确定滑动方向
+        if (Math.abs(deltaX) > Math.abs(deltaY) * config.touchSensitivity) {
+            const newDirection = deltaX > threshold ? 'right' : deltaX < -threshold ? 'left' : null;
+            if (newDirection && newDirection !== lastDirection) {
+                handleTouch(newDirection);
+                lastDirection = newDirection;
+            }
+        } else if (Math.abs(deltaY) > Math.abs(deltaX) * config.touchSensitivity) {
+            const newDirection = deltaY > threshold ? 'down' : deltaY < -threshold ? 'up' : null;
+            if (newDirection && newDirection !== lastDirection) {
+                handleTouch(newDirection);
+                lastDirection = newDirection;
+            }
+        }
+    });
+
+    // 阻止默认的滚动行为
+    document.addEventListener('touchmove', (e) => {
+        if (e.target === canvas) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // 适配移动端画布大小
+    function resizeCanvas() {
+        const container = canvas.parentElement;
+        const maxSize = Math.min(container.clientWidth, window.innerHeight * 0.5);
+        canvas.style.width = maxSize + 'px';
+        canvas.style.height = maxSize + 'px';
+    }
+
+    // 监听屏幕旋转和调整大小
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', resizeCanvas);
+    resizeCanvas();
+}
+
 // 键盘控制
 document.addEventListener("keydown", (event) => {
     if (gameState.paused && event.key !== "p") return;
@@ -586,8 +719,9 @@ document.addEventListener("keydown", (event) => {
     }
 });
 
-// 初始化
+// 修改初始化函数
 window.onload = () => {
     loadGameData();
+    initTouchControls();
     showScreen("mainMenu");
 }; 
